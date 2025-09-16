@@ -1,0 +1,116 @@
+{
+  "homepage": {
+    "hero": {
+      "subtitle": "Der führende Marktplatz für frische Blumen in der Schweiz. Direkt von lokalen Produzenten zu Ihnen nach Hause.",
+      "cta": {
+        "browse": "Blumen entdecken",
+        "merchant": "Als Produzent verkaufen"
+      }
+    },
+    "features": {
+      "title": "Warum tofi.ch?",
+      "subtitle": "Entdecken Sie die Vorteile unseres einzigartigen Blumenmarktplatzes",
+      "fresh": {
+        "title": "Tagesfrisch",
+        "description": "Alle Blumen werden am Tag der Bestellung geschnitten und sind garantiert frisch."
+      },
+      "local": {
+        "title": "Lokal & Nachhaltig",
+        "description": "Unterstützen Sie Schweizer Produzenten und reduzieren Sie Transportwege."
+      },
+      "payment": {
+        "title": "Sicher bezahlen",
+        "description": "Mit TWINT, Kreditkarte oder PostFinance - alle Zahlungen sind SSL-verschlüsselt."
+      }
+    },
+    "cta": {
+      "title": "Bereit für frische Blumen?",
+      "subtitle": "Entdecken Sie unser Sortiment von über 100 Schweizer Blumenproduzenten.",
+      "button": "Jetzt bestellen"
+    }
+  },
+  "navigation": {
+    "home": "Home",
+    "products": "Produkte",
+    "merchants": "Produzenten",
+    "about": "Über uns",
+    "contact": "Kontakt",
+    "account": "Mein Konto",
+    "cart": "Warenkorb",
+    "signin": "Anmelden",
+    "signup": "Registrieren"
+  },
+  "common": {
+    "loading": "Wird geladen...",
+    "error": "Ein Fehler ist aufgetreten",
+    "retry": "Erneut versuchen",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "close": "Schliessen",
+    "next": "Weiter",
+    "previous": "Zurück",
+    "search": "Suchen",
+    "filter": "Filter",
+    "sort": "Sortieren",
+    "price": "Preis",
+    "availability": "Verfügbarkeit",
+    "delivery": "Lieferung",
+    "pickup": "Abholung"
+  },
+  "auth": {
+    "signin": {
+      "title": "Anmelden",
+      "subtitle": "Melden Sie sich in Ihrem tofi.ch Konto an",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "mfa": "2FA Code",
+      "button": "Anmelden",
+      "forgot": "Passwort vergessen?",
+      "signup": "Noch kein Konto? Jetzt registrieren"
+    },
+    "signup": {
+      "title": "Registrieren",
+      "subtitle": "Erstellen Sie Ihr tofi.ch Konto",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "confirmPassword": "Passwort bestätigen",
+      "terms": "Ich akzeptiere die AGB und Datenschutzerklärung",
+      "button": "Konto erstellen",
+      "signin": "Bereits ein Konto? Jetzt anmelden"
+    }
+  },
+  "products": {
+    "title": "Blumen & Pflanzen",
+    "search": "Nach Blumen suchen...",
+    "noResults": "Keine Produkte gefunden",
+    "addToCart": "In den Warenkorb",
+    "outOfStock": "Nicht verfügbar",
+    "preOrder": "Vorbestellung möglich",
+    "seasonal": "Saisonal verfügbar",
+    "details": {
+      "description": "Beschreibung",
+      "care": "Pflegehinweise",
+      "delivery": "Lieferinformationen",
+      "merchant": "Produzent"
+    }
+  },
+  "cart": {
+    "title": "Warenkorb",
+    "empty": "Ihr Warenkorb ist leer",
+    "item": "Artikel",
+    "items": "Artikel",
+    "quantity": "Anzahl",
+    "total": "Total",
+    "subtotal": "Zwischensumme",
+    "vat": "MwSt. (7.7%)",
+    "delivery": "Lieferkosten",
+    "checkout": "Zur Kasse",
+    "continue": "Weiter einkaufen",
+    "remove": "Entfernen",
+    "update": "Aktualisieren"
+  }
+}

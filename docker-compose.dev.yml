@@ -1,0 +1,151 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with PostGIS
+  postgres:
+    image: postgis/postgis:15-3.4
+    container_name: tofi-postgres
+    environment:
+      POSTGRES_DB: tofi_dev
+      POSTGRES_USER: tofi
+      POSTGRES_PASSWORD: tofi
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=de_CH.UTF-8 --lc-ctype=de_CH.UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tofi -d tofi_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - tofi-network
+
+  # Redis for sessions and caching
+  redis:
+    image: redis:7-alpine
+    container_name: tofi-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass tofi
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - tofi-network
+
+  # OpenSearch for product search
+  opensearch:
+    image: opensearchproject/opensearch:2.11.0
+    container_name: tofi-opensearch
+    environment:
+      - cluster.name=tofi-cluster
+      - node.name=opensearch-node1
+      - discovery.seed_hosts=opensearch-node1
+      - cluster.initial_cluster_manager_nodes=opensearch-node1
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+      - "DISABLE_SECURITY_PLUGIN=true"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cat/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - tofi-network
+
+  # OpenSearch Dashboards for development
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:2.11.0
+    container_name: tofi-opensearch-dashboards
+    ports:
+      - "5601:5601"
+    expose:
+      - "5601"
+    environment:
+      OPENSEARCH_HOSTS: '["http://opensearch:9200"]'
+      DISABLE_SECURITY_DASHBOARDS_PLUGIN: "true"
+    depends_on:
+      - opensearch
+    networks:
+      - tofi-network
+
+  # MailHog for email testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: tofi-mailhog
+    ports:
+      - "1025:1025" # SMTP server
+      - "8025:8025" # Web UI
+    networks:
+      - tofi-network
+
+  # MinIO for S3-compatible storage (development)
+  minio:
+    image: minio/minio:latest
+    container_name: tofi-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - tofi-network
+
+  # Prisma Studio (optional, for database inspection)
+  prisma-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile.prisma-studio
+    container_name: tofi-prisma-studio
+    ports:
+      - "5555:5555"
+    environment:
+      DATABASE_URL: "postgresql://tofi:tofi@postgres:5432/tofi_dev"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - tofi-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  opensearch_data:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  tofi-network:
+    driver: bridge

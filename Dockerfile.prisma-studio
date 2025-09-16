@@ -1,0 +1,21 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy package files
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./
+COPY packages/database/package.json ./packages/database/
+COPY packages/database/schema.prisma ./packages/database/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Generate Prisma client
+RUN cd packages/database && pnpm prisma generate
+
+EXPOSE 5555
+
+CMD ["pnpm", "--filter", "@tofi/database", "db:studio", "--port", "5555", "--hostname", "0.0.0.0"]
