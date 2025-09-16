@@ -1,0 +1,498 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DATABASE_URL_UNPOOLED")
+  extensions = [postgis]
+}
+
+// User and Authentication Models
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  emailVerified     DateTime?
+  firstName         String
+  lastName          String
+  phone             String?
+  phoneVerified     DateTime?
+  preferredLanguage String    @default("de-CH")
+  role              UserRole  @default(CUSTOMER)
+  isActive          Boolean   @default(true)
+  mfaEnabled        Boolean   @default(false)
+  mfaSecret         String?
+  lastLoginAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Address with PostGIS
+  street       String?
+  houseNumber  String?
+  zipCode      String?
+  city         String?
+  canton       SwissCanton?
+  country      String?   @default("CH")
+  coordinates  Unsupported("geometry(Point, 4326)")?
+
+  // Relations
+  accounts       Account[]
+  sessions       Session[]
+  orders         Order[]
+  merchant       Merchant?
+  reviews        Review[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  ipAddress    String?
+  userAgent    String?
+  isValid      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// Merchant Model
+model Merchant {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  businessName           String
+  legalName              String?
+  email                  String   @unique
+  phone                  String
+  vatNumber              String?
+  businessLicense        String?
+  description            String?
+  logo                   String?
+  coverImage             String?
+  website                String?
+  instagramHandle        String?
+  facebookPage           String?
+  minimumOrderCentimes   Int?     // in centimes (Rappen)
+  deliveryFeeCentimes    Int      @default(0)
+  freeDeliveryThreshold  Int?     // in centimes
+  isActive               Boolean  @default(false)
+  isVerified             Boolean  @default(false)
+  rating                 Float?
+  totalReviews           Int      @default(0)
+  joinedAt               DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  // Address with PostGIS
+  street       String
+  houseNumber  String
+  zipCode      String
+  city         String
+  canton       SwissCanton
+  country      String      @default("CH")
+  coordinates  Unsupported("geometry(Point, 4326)")?
+
+  // Relations
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products       Product[]
+  orders         Order[]
+  deliveryZones  DeliveryZone[]
+  operatingHours OperatingHours?
+  reviews        Review[]
+
+  @@map("merchants")
+}
+
+model OperatingHours {
+  id         String @id @default(cuid())
+  merchantId String @unique
+
+  // Weekly schedule
+  mondayOpen     String?
+  mondayClose    String?
+  mondayIsOpen   Boolean @default(false)
+  tuesdayOpen    String?
+  tuesdayClose   String?
+  tuesdayIsOpen  Boolean @default(false)
+  wednesdayOpen  String?
+  wednesdayClose String?
+  wednesdayIsOpen Boolean @default(false)
+  thursdayOpen   String?
+  thursdayClose  String?
+  thursdayIsOpen Boolean @default(false)
+  fridayOpen     String?
+  fridayClose    String?
+  fridayIsOpen   Boolean @default(false)
+  saturdayOpen   String?
+  saturdayClose  String?
+  saturdayIsOpen Boolean @default(false)
+  sundayOpen     String?
+  sundayClose    String?
+  sundayIsOpen   Boolean @default(false)
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@map("operating_hours")
+}
+
+model DeliveryZone {
+  id                      String   @id @default(cuid())
+  merchantId              String
+  name                    String
+  postalCodes             String[] // Array of postal codes
+  deliveryFeeCentimes     Int
+  minimumOrderCentimes    Int?
+  deliveryTimeMinutes     Int      @default(60)
+  isActive                Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@map("delivery_zones")
+}
+
+// Product Models
+model ProductCategory {
+  id          String            @id @default(cuid())
+  name        String
+  slug        String            @unique
+  description String?
+  parentId    String?
+  imageUrl    String?
+  sortOrder   Int               @default(0)
+  isActive    Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  parent   ProductCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children ProductCategory[] @relation("CategoryHierarchy")
+  products Product[]
+
+  @@map("product_categories")
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  merchantId    String
+  categoryId    String
+  name          String
+  slug          String
+  description   String?
+  priceCentimes Int      // Price in centimes (Rappen)
+  vatRate       Float    @default(0.077) // Swiss VAT rate 7.7%
+  vatIncluded   Boolean  @default(true)
+  
+  // Availability
+  inStock            Boolean   @default(true)
+  quantity           Int?
+  nextAvailable      DateTime?
+  preOrderEnabled    Boolean   @default(false)
+  
+  // Seasonal availability
+  seasonalStart      DateTime?
+  seasonalEnd        DateTime?
+  seasonalRecurring  Boolean   @default(false)
+  
+  // Metadata
+  tags               String[]
+  isActive           Boolean   @default(true)
+  isFeatured         Boolean   @default(false)
+  sortOrder          Int       @default(0)
+  
+  // SEO
+  metaTitle          String?
+  metaDescription    String?
+  
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  // Relations
+  merchant   Merchant        @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  category   ProductCategory @relation(fields: [categoryId], references: [id])
+  images     ProductImage[]
+  orderItems OrderItem[]
+  reviews    Review[]
+
+  @@unique([merchantId, slug])
+  @@map("products")
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  url       String
+  alt       String
+  width     Int?
+  height    Int?
+  sortOrder Int     @default(0)
+  isMain    Boolean @default(false)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+}
+
+// Order Models
+model Order {
+  id               String      @id @default(cuid())
+  orderNumber      String      @unique
+  customerId       String
+  merchantId       String
+  status           OrderStatus @default(PENDING)
+  
+  // Pricing (all in centimes)
+  subtotalCentimes    Int
+  vatCentimes         Int
+  deliveryFeeCentimes Int
+  totalCentimes       Int
+  
+  // Delivery information
+  deliveryDate        DateTime?
+  deliveryTimeStart   String?
+  deliveryTimeEnd     String?
+  
+  // Delivery address
+  deliveryStreet      String
+  deliveryHouseNumber String
+  deliveryZipCode     String
+  deliveryCity        String
+  deliveryCanton      SwissCanton
+  deliveryCountry     String  @default("CH")
+  deliveryCoordinates Unsupported("geometry(Point, 4326)")?
+  
+  // Billing address (optional, defaults to delivery)
+  billingStreet       String?
+  billingHouseNumber  String?
+  billingZipCode      String?
+  billingCity         String?
+  billingCanton       SwissCanton?
+  billingCountry      String?
+  billingCoordinates  Unsupported("geometry(Point, 4326)")?
+  
+  // Payment
+  paymentStatus       PaymentStatus @default(PENDING)
+  paymentMethod       PaymentMethod?
+  paymentIntentId     String?
+  
+  // Metadata
+  notes               String?
+  internalNotes       String?
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  customer  User        @relation(fields: [customerId], references: [id])
+  merchant  Merchant    @relation(fields: [merchantId], references: [id])
+  items     OrderItem[]
+  payments  Payment[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id                String @id @default(cuid())
+  orderId           String
+  productId         String
+  quantity          Int
+  unitPriceCentimes Int
+  totalPriceCentimes Int
+  customization     String?
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  orderId         String
+  method          PaymentMethod
+  status          PaymentStatus @default(PENDING)
+  amountCentimes  Int
+  currency        String        @default("CHF")
+  providerRef     String?       // Reference from payment provider
+  providerData    Json?         // Additional data from provider
+  failureReason   String?
+  processedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+// Review Model
+model Review {
+  id         String   @id @default(cuid())
+  userId     String
+  productId  String?
+  merchantId String?
+  rating     Int      // 1-5 scale
+  title      String?
+  comment    String?
+  isVerified Boolean  @default(false)
+  isVisible  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product  Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  merchant Merchant? @relation(fields: [merchantId], references: [id], onDelete: SetNull)
+
+  // Ensure one review per user per product/merchant
+  @@unique([userId, productId])
+  @@unique([userId, merchantId])
+  @@map("reviews")
+}
+
+// Notification Model
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?            // Additional structured data
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// Audit Log Model
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String
+  resource    String
+  resourceId  String?
+  oldValues   Json?
+  newValues   Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+// Enums
+enum UserRole {
+  CUSTOMER
+  MERCHANT
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum SwissCanton {
+  AG // Aargau
+  AI // Appenzell Innerrhoden
+  AR // Appenzell Ausserrhoden
+  BE // Bern
+  BL // Basel-Landschaft
+  BS // Basel-Stadt
+  FR // Fribourg
+  GE // Geneva
+  GL // Glarus
+  GR // Graubünden
+  JU // Jura
+  LU // Lucerne
+  NE // Neuchâtel
+  NW // Nidwalden
+  OW // Obwalden
+  SG // St. Gallen
+  SH // Schaffhausen
+  SO // Solothurn
+  SZ // Schwyz
+  TG // Thurgau
+  TI // Ticino
+  UR // Uri
+  VD // Vaud
+  VS // Valais
+  ZG // Zug
+  ZH // Zurich
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY_FOR_DELIVERY
+  IN_DELIVERY
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  TWINT
+  CREDIT_CARD
+  BANK_TRANSFER
+  CASH_ON_DELIVERY
+  POSTFINANCE
+}
+
+enum NotificationType {
+  ORDER_CONFIRMATION
+  ORDER_STATUS_UPDATE
+  PAYMENT_CONFIRMATION
+  DELIVERY_UPDATE
+  MERCHANT_MESSAGE
+  SYSTEM_NOTIFICATION
+  MARKETING
+}
