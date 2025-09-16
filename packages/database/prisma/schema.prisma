@@ -1,0 +1,605 @@
+// Prisma schema for tofi.ch Swiss flowers marketplace
+// Supports PostgreSQL with PostGIS for geospatial features
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis]
+}
+
+// Users and Authentication
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  emailVerified     DateTime?
+  firstName         String
+  lastName          String
+  password          String?
+  image             String?
+  role              UserRole  @default(CUSTOMER)
+  language          String    @default("de-CH")
+  isMfaEnabled      Boolean   @default(false)
+  mfaSecret         String?
+  lastLoginAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  accounts          Account[]
+  sessions          Session[]
+  addresses         UserAddress[]
+  preferences       UserPreferences?
+  merchant          Merchant?
+  orders            Order[]
+  reviews           Review[]
+  productReviews    ProductReview[]
+  cartItems         CartItem[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+model UserAddress {
+  id           String      @id @default(cuid())
+  userId       String
+  type         AddressType
+  isDefault    Boolean     @default(false)
+  label        String?
+  contactName  String
+  contactEmail String
+  contactPhone String?
+  street       String
+  streetNumber String
+  city         String
+  zipCode      String
+  canton       String
+  country      String      @default("CH")
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ordersBilling Order[]    @relation("BillingAddress")
+  ordersShipping Order[]   @relation("ShippingAddress")
+
+  @@map("user_addresses")
+}
+
+model UserPreferences {
+  id                  String  @id @default(cuid())
+  userId              String  @unique
+  newsletter          Boolean @default(false)
+  smsNotifications    Boolean @default(false)
+  emailNotifications  Boolean @default(true)
+  marketingEmails     Boolean @default(false)
+  language            String  @default("de-CH")
+  theme               String  @default("system")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+// Merchants
+model Merchant {
+  id              String         @id @default(cuid())
+  userId          String         @unique
+  businessName    String
+  displayName     String
+  description     String?
+  logo            String?
+  coverImage      String?
+  status          MerchantStatus @default(PENDING)
+  isVerified      Boolean        @default(false)
+  
+  // Business information
+  businessType    String
+  uid             String?        // Swiss business identification number
+  vatNumber       String?
+  commercialRegNo String?
+  
+  // Contact information
+  email           String
+  phone           String
+  mobile          String?
+  
+  // Business address
+  street          String
+  streetNumber    String
+  city            String
+  zipCode         String
+  canton          String
+  country         String         @default("CH")
+  
+  // Settings
+  minOrderValue   Decimal?       @db.Decimal(10,2)
+  maxOrderValue   Decimal?       @db.Decimal(10,2)
+  processingTime  String         @default("2-4 hours")
+  autoAcceptOrders Boolean       @default(false)
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relations
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products        Product[]
+  orders          Order[]
+  reviews         Review[]
+  deliveryZones   DeliveryZone[]
+  businessHours   BusinessHours[]
+
+  @@map("merchants")
+}
+
+model DeliveryZone {
+  id              String   @id @default(cuid())
+  merchantId      String
+  name            String
+  zipCodes        String[] // Array of postal codes
+  canton          String
+  deliveryFee     Decimal  @db.Decimal(10,2)
+  minOrderValue   Decimal? @db.Decimal(10,2)
+  estimatedTime   String   // e.g., "1-2 days"
+  isActive        Boolean  @default(true)
+
+  merchant        Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@map("delivery_zones")
+}
+
+model BusinessHours {
+  id          String  @id @default(cuid())
+  merchantId  String
+  dayOfWeek   Int     // 0 = Sunday, 1 = Monday, etc.
+  openTime    String  // "09:00"
+  closeTime   String  // "18:00"
+  isClosed    Boolean @default(false)
+
+  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@unique([merchantId, dayOfWeek])
+  @@map("business_hours")
+}
+
+// Products
+model Product {
+  id               String            @id @default(cuid())
+  merchantId       String
+  name             String
+  description      String
+  shortDescription String?
+  sku              String?
+  category         ProductCategory
+  subcategory      String?
+  price            Decimal           @db.Decimal(10,2)
+  originalPrice    Decimal?          @db.Decimal(10,2)
+  currency         String            @default("CHF")
+  includesVat      Boolean           @default(true)
+  vatRate          Decimal           @default(7.7) @db.Decimal(4,2)
+  isAvailable      Boolean           @default(true)
+  stockQuantity    Int?
+  minQuantity      Int               @default(1)
+  maxQuantity      Int?
+  unit             ProductUnit       @default(PIECE)
+  tags             String[]
+  isPreOrderOnly   Boolean           @default(false)
+  preOrderLeadTime Int?              // hours
+  careInstructions String?
+  
+  // SEO
+  seoTitle         String?
+  seoDescription   String?
+  
+  // Flower-specific fields
+  flowerTypes      String[]
+  colors           String[]
+  fragrance        Fragrance?
+  occasions        String[]
+  lifespan         String?
+  careLevel        CareLevel?
+  symbolism        String?
+  
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  // Relations
+  merchant         Merchant          @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  images           ProductImage[]
+  variants         ProductVariant[]
+  attributes       ProductAttribute[]
+  seasonality      ProductSeasonality?
+  orderItems       OrderItem[]
+  cartItems        CartItem[]
+  reviews          ProductReview[]
+
+  @@map("products")
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  url       String
+  alt       String
+  isPrimary Boolean @default(false)
+  order     Int     @default(0)
+
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+}
+
+model ProductVariant {
+  id            String             @id @default(cuid())
+  productId     String
+  name          String
+  sku           String?
+  price         Decimal            @db.Decimal(10,2)
+  stockQuantity Int?
+  isAvailable   Boolean            @default(true)
+
+  product       Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  attributes    VariantAttribute[]
+  orderItems    OrderItem[]
+
+  @@map("product_variants")
+}
+
+model ProductAttribute {
+  id        String            @id @default(cuid())
+  productId String
+  name      String
+  value     String
+  type      AttributeType     @default(TEXT)
+
+  product   Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_attributes")
+}
+
+model VariantAttribute {
+  id        String            @id @default(cuid())
+  variantId String
+  name      String
+  value     String
+  type      AttributeType     @default(TEXT)
+
+  variant   ProductVariant    @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@map("variant_attributes")
+}
+
+model ProductSeasonality {
+  id             String  @id @default(cuid())
+  productId      String  @unique
+  availableMonths Int[]  // 1-12
+  peakMonths     Int[]?  // when quality/availability is best
+  notes          String?
+
+  product        Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_seasonality")
+}
+
+// Orders
+model Order {
+  id                    String         @id @default(cuid())
+  orderNumber           String         @unique
+  userId                String
+  merchantId            String
+  status                OrderStatus    @default(PENDING)
+  
+  // Pricing
+  subtotal              Decimal        @db.Decimal(10,2)
+  deliveryFee           Decimal        @db.Decimal(10,2)
+  taxes                 Decimal        @db.Decimal(10,2)
+  discount              Decimal?       @db.Decimal(10,2)
+  total                 Decimal        @db.Decimal(10,2)
+  currency              String         @default("CHF")
+  
+  // Delivery
+  deliveryType          DeliveryType
+  deliveryDate          DateTime
+  deliveryTimeSlot      String?
+  estimatedDeliveryTime DateTime?
+  actualDeliveryTime    DateTime?
+  
+  // Address references
+  billingAddressId      String
+  shippingAddressId     String
+  
+  // Payment
+  paymentMethod         PaymentMethod
+  paymentStatus         PaymentStatus  @default(PENDING)
+  transactionId         String?
+  paidAt                DateTime?
+  
+  // Additional information
+  specialInstructions   String?
+  isGift                Boolean        @default(false)
+  giftMessage           String?
+  cancellationReason    String?
+  refundAmount          Decimal?       @db.Decimal(10,2)
+  
+  // Review
+  rating                Int?
+  review                String?
+  
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  // Relations
+  user                  User           @relation(fields: [userId], references: [id])
+  merchant              Merchant       @relation(fields: [merchantId], references: [id])
+  billingAddress        UserAddress    @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  shippingAddress       UserAddress    @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  items                 OrderItem[]
+  statusHistory         OrderStatusHistory[]
+  refunds               PaymentRefund[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id               String             @id @default(cuid())
+  orderId          String
+  productId        String
+  variantId        String?
+  name             String
+  description      String?
+  quantity         Int
+  unitPrice        Decimal            @db.Decimal(10,2)
+  totalPrice       Decimal            @db.Decimal(10,2)
+  image            String?
+  specialRequests  String?
+  isGift           Boolean            @default(false)
+  giftMessage      String?
+
+  order            Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product          Product            @relation(fields: [productId], references: [id])
+  variant          ProductVariant?    @relation(fields: [variantId], references: [id])
+  customizations   ItemCustomization[]
+
+  @@map("order_items")
+}
+
+model ItemCustomization {
+  id             String    @id @default(cuid())
+  orderItemId    String
+  type           String    // e.g., 'ribbon_color', 'card_message'
+  name           String
+  value          String
+  additionalCost Decimal?  @db.Decimal(10,2)
+
+  orderItem      OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  @@map("item_customizations")
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(cuid())
+  orderId   String
+  status    OrderStatus
+  note      String?
+  updatedBy String      // userId or 'system'
+  timestamp DateTime    @default(now())
+
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_status_history")
+}
+
+model PaymentRefund {
+  id            String        @id @default(cuid())
+  orderId       String
+  amount        Decimal       @db.Decimal(10,2)
+  reason        String
+  status        RefundStatus  @default(PENDING)
+  transactionId String?
+  processedAt   DateTime?
+  createdAt     DateTime      @default(now())
+
+  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payment_refunds")
+}
+
+// Shopping Cart
+model CartItem {
+  id          String             @id @default(cuid())
+  userId      String
+  productId   String
+  merchantId  String             // For easier querying
+  quantity    Int
+  unitPrice   Decimal            @db.Decimal(10,2)
+  totalPrice  Decimal            @db.Decimal(10,2)
+  addedAt     DateTime           @default(now())
+  expiresAt   DateTime
+
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product     Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("cart_items")
+}
+
+// Reviews
+model Review {
+  id                String   @id @default(cuid())
+  merchantId        String
+  userId            String
+  orderId           String?
+  rating            Int      // 1-5
+  comment           String?
+  response          String?
+  respondedAt       DateTime?
+  isVerified        Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  merchant          Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+}
+
+model ProductReview {
+  id                String   @id @default(cuid())
+  productId         String
+  userId            String
+  orderId           String?
+  rating            Int      // 1-5
+  title             String?
+  comment           String?
+  images            String[]
+  isVerifiedPurchase Boolean @default(false)
+  helpfulCount      Int      @default(0)
+  createdAt         DateTime @default(now())
+
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("product_reviews")
+}
+
+// Enums
+enum UserRole {
+  CUSTOMER
+  MERCHANT
+  ADMIN
+}
+
+enum AddressType {
+  BILLING
+  SHIPPING
+}
+
+enum MerchantStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  SUSPENDED
+  REJECTED
+  INACTIVE
+}
+
+enum ProductCategory {
+  BOUQUETS
+  ARRANGEMENTS
+  PLANTS
+  WEDDING
+  FUNERAL
+  CORPORATE
+  SEASONAL
+  GIFTS
+  ACCESSORIES
+}
+
+enum ProductUnit {
+  PIECE
+  BUNCH
+  STEM
+  ARRANGEMENT
+  BOUQUET
+  PLANT
+}
+
+enum AttributeType {
+  TEXT
+  NUMBER
+  BOOLEAN
+  COLOR
+  SIZE
+}
+
+enum Fragrance {
+  NONE
+  LIGHT
+  MEDIUM
+  STRONG
+}
+
+enum CareLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  TWINT
+  BANK_TRANSFER
+  POSTFINANCE
+  INVOICE
+}
+
+enum DeliveryType {
+  STANDARD
+  EXPRESS
+  SCHEDULED
+  PICKUP
+  SUBSCRIPTION
+}
+
+enum RefundStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
