@@ -1,0 +1,23 @@
+{
+  "name": "@tofi/database",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "tsx seed.ts",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset --force"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.6.0",
+    "@tofi/types": "workspace:*"
+  },
+  "devDependencies": {
+    "prisma": "^5.6.0",
+    "tsx": "^4.2.0",
+    "typescript": "^5.2.2"
+  }
+}

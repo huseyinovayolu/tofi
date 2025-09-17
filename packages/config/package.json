@@ -1,0 +1,10 @@
+{
+  "name": "@tofi/config",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  }
+}

@@ -1,0 +1,132 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  nameFr      String?
+  description String?
+  slug        String    @unique
+  image       String?
+  parentId    String?
+  parent      Category? @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryToCategory")
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("categories")
+}
+
+model Product {
+  id            String    @id @default(cuid())
+  name          String
+  nameFr        String?
+  description   String
+  descriptionFr String?
+  price         Float
+  categoryId    String
+  category      Category  @relation(fields: [categoryId], references: [id])
+  stock         Int       @default(0)
+  images        String    // JSON array of image URLs
+  season        String    // Season enum as string
+  region        String    // Canton enum as string
+  farmer        String
+  isActive      Boolean   @default(true)
+  orderItems    OrderItem[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("products")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  firstName String
+  lastName  String
+  phone     String?
+  isActive  Boolean  @default(true)
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Merchant {
+  id           String   @id @default(cuid())
+  businessName String
+  ownerName    String
+  email        String   @unique
+  phone        String
+  address      String   // JSON stringified Address object
+  vatNumber    String?
+  bankAccount  String?
+  isActive     Boolean  @default(true)
+  orders       Order[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("merchants")
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  customerId      String?
+  customer        User?       @relation(fields: [customerId], references: [id])
+  merchantId      String?
+  merchant        Merchant?   @relation(fields: [merchantId], references: [id])
+  status          String      // OrderStatus enum as string
+  paymentMethod   String      // PaymentMethod enum as string
+  paymentStatus   String      // PaymentStatus enum as string
+  shippingAddress String      // JSON stringified Address object
+  billingAddress  String      // JSON stringified Address object
+  subtotal        Float
+  mwst            Float
+  shippingCost    Float       @default(0)
+  total           Float
+  notes           String?
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float   // Price at time of order
+  total     Float   // quantity * price
+
+  @@map("order_items")
+}
+
+model Analytics {
+  id          String   @id @default(cuid())
+  date        DateTime @default(now())
+  totalSales  Float    @default(0)
+  orderCount  Int      @default(0)
+  productsSold Int     @default(0)
+  avgOrderValue Float  @default(0)
+  topProduct  String?
+  topCategory String?
+  revenue     Float    @default(0)
+
+  @@map("analytics")
+}
