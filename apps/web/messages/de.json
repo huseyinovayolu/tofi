@@ -1,0 +1,111 @@
+{
+  "common": {
+    "loading": "Laden...",
+    "error": "Fehler",
+    "add_to_cart": "In den Warenkorb",
+    "out_of_stock": "Ausverkauft",
+    "price": "Preis",
+    "quantity": "Anzahl",
+    "total": "Total",
+    "subtotal": "Zwischensumme",
+    "shipping": "Versand",
+    "vat": "MWST (7.7%)",
+    "free_shipping": "Gratis Versand ab CHF 100",
+    "search": "Suchen...",
+    "clear": "Löschen",
+    "filter": "Filter",
+    "sort": "Sortieren",
+    "category": "Kategorie",
+    "all_categories": "Alle Kategorien",
+    "season": "Saison",
+    "region": "Region"
+  },
+  "navigation": {
+    "home": "Startseite",
+    "products": "Produkte",
+    "categories": "Kategorien",
+    "cart": "Warenkorb",
+    "checkout": "Kasse",
+    "about": "Über uns",
+    "contact": "Kontakt"
+  },
+  "homepage": {
+    "hero_title": "Schweizer Blumen direkt vom Bauernhof",
+    "hero_subtitle": "Entdecken Sie die schönsten Blumen der Schweiz - frisch, regional und nachhaltig angebaut von lokalen Produzenten.",
+    "featured_products": "Ausgewählte Produkte",
+    "categories_title": "Kategorien",
+    "why_choose_us": "Warum Tofi wählen?",
+    "local_producers": "Lokale Produzenten",
+    "local_producers_desc": "Direkt von Schweizer Bauernhöfen",
+    "fresh_quality": "Frische Qualität",
+    "fresh_quality_desc": "Täglich frisch gepflückt",
+    "sustainable": "Nachhaltig",
+    "sustainable_desc": "Umweltfreundlicher Anbau"
+  },
+  "products": {
+    "title": "Alle Produkte",
+    "search_placeholder": "Blumen suchen...",
+    "no_results": "Keine Produkte gefunden",
+    "farmer": "Produzent",
+    "stock_low": "Nur noch {count} verfügbar",
+    "product_details": "Produktdetails",
+    "description": "Beschreibung",
+    "specifications": "Spezifikationen"
+  },
+  "cart": {
+    "title": "Warenkorb",
+    "empty": "Ihr Warenkorb ist leer",
+    "items_count": "{count} Artikel",
+    "remove": "Entfernen",
+    "update_quantity": "Anzahl ändern",
+    "proceed_to_checkout": "Zur Kasse",
+    "continue_shopping": "Weiter einkaufen"
+  },
+  "checkout": {
+    "title": "Kasse",
+    "shipping_address": "Lieferadresse",
+    "billing_address": "Rechnungsadresse",
+    "same_as_shipping": "Gleich wie Lieferadresse",
+    "payment_method": "Zahlungsart",
+    "order_summary": "Bestellübersicht",
+    "place_order": "Bestellung aufgeben",
+    "first_name": "Vorname",
+    "last_name": "Nachname",
+    "company": "Firma (optional)",
+    "street": "Strasse",
+    "house_number": "Hausnummer",
+    "postal_code": "PLZ",
+    "city": "Ort",
+    "canton": "Kanton",
+    "phone": "Telefon (optional)",
+    "email": "E-Mail",
+    "order_notes": "Bestellnotizen (optional)"
+  },
+  "payment": {
+    "methods": {
+      "TWINT": "TWINT",
+      "CREDIT_CARD": "Kreditkarte",
+      "INVOICE": "Rechnung",
+      "BANK_TRANSFER": "Banküberweisung"
+    },
+    "processing": "Zahlung wird verarbeitet...",
+    "success": "Zahlung erfolgreich!",
+    "failed": "Zahlung fehlgeschlagen"
+  },
+  "order": {
+    "confirmation": "Bestellbestätigung",
+    "number": "Bestellnummer",
+    "status": "Status",
+    "thank_you": "Vielen Dank für Ihre Bestellung!",
+    "order_details": "Bestelldetails",
+    "shipping_info": "Versandinformationen"
+  },
+  "errors": {
+    "generic": "Ein Fehler ist aufgetreten",
+    "network": "Netzwerkfehler",
+    "product_not_found": "Produkt nicht gefunden",
+    "out_of_stock": "Produkt ist nicht mehr verfügbar",
+    "invalid_postal_code": "Ungültige Postleitzahl",
+    "required_field": "Dieses Feld ist erforderlich"
+  }
+}

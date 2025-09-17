@@ -1,0 +1,111 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "add_to_cart": "Ajouter au panier",
+    "out_of_stock": "Épuisé",
+    "price": "Prix",
+    "quantity": "Quantité",
+    "total": "Total",
+    "subtotal": "Sous-total",
+    "shipping": "Livraison",
+    "vat": "TVA (7.7%)",
+    "free_shipping": "Livraison gratuite dès CHF 100",
+    "search": "Rechercher...",
+    "clear": "Effacer",
+    "filter": "Filtrer",
+    "sort": "Trier",
+    "category": "Catégorie",
+    "all_categories": "Toutes les catégories",
+    "season": "Saison",
+    "region": "Région"
+  },
+  "navigation": {
+    "home": "Accueil",
+    "products": "Produits",
+    "categories": "Catégories",
+    "cart": "Panier",
+    "checkout": "Commande",
+    "about": "À propos",
+    "contact": "Contact"
+  },
+  "homepage": {
+    "hero_title": "Fleurs suisses directement de la ferme",
+    "hero_subtitle": "Découvrez les plus belles fleurs de Suisse - fraîches, régionales et cultivées de manière durable par des producteurs locaux.",
+    "featured_products": "Produits sélectionnés",
+    "categories_title": "Catégories",
+    "why_choose_us": "Pourquoi choisir Tofi ?",
+    "local_producers": "Producteurs locaux",
+    "local_producers_desc": "Directement des fermes suisses",
+    "fresh_quality": "Qualité fraîche",
+    "fresh_quality_desc": "Cueillies fraîches chaque jour",
+    "sustainable": "Durable",
+    "sustainable_desc": "Culture respectueuse de l'environnement"
+  },
+  "products": {
+    "title": "Tous les produits",
+    "search_placeholder": "Rechercher des fleurs...",
+    "no_results": "Aucun produit trouvé",
+    "farmer": "Producteur",
+    "stock_low": "Plus que {count} disponible",
+    "product_details": "Détails du produit",
+    "description": "Description",
+    "specifications": "Spécifications"
+  },
+  "cart": {
+    "title": "Panier",
+    "empty": "Votre panier est vide",
+    "items_count": "{count} articles",
+    "remove": "Supprimer",
+    "update_quantity": "Modifier la quantité",
+    "proceed_to_checkout": "Passer la commande",
+    "continue_shopping": "Continuer les achats"
+  },
+  "checkout": {
+    "title": "Commande",
+    "shipping_address": "Adresse de livraison",
+    "billing_address": "Adresse de facturation",
+    "same_as_shipping": "Identique à l'adresse de livraison",
+    "payment_method": "Mode de paiement",
+    "order_summary": "Résumé de la commande",
+    "place_order": "Passer la commande",
+    "first_name": "Prénom",
+    "last_name": "Nom",
+    "company": "Entreprise (optionnel)",
+    "street": "Rue",
+    "house_number": "Numéro",
+    "postal_code": "NPA",
+    "city": "Ville",
+    "canton": "Canton",
+    "phone": "Téléphone (optionnel)",
+    "email": "E-mail",
+    "order_notes": "Notes de commande (optionnel)"
+  },
+  "payment": {
+    "methods": {
+      "TWINT": "TWINT",
+      "CREDIT_CARD": "Carte de crédit",
+      "INVOICE": "Facture",
+      "BANK_TRANSFER": "Virement bancaire"
+    },
+    "processing": "Traitement du paiement...",
+    "success": "Paiement réussi !",
+    "failed": "Paiement échoué"
+  },
+  "order": {
+    "confirmation": "Confirmation de commande",
+    "number": "Numéro de commande",
+    "status": "Statut",
+    "thank_you": "Merci pour votre commande !",
+    "order_details": "Détails de la commande",
+    "shipping_info": "Informations de livraison"
+  },
+  "errors": {
+    "generic": "Une erreur s'est produite",
+    "network": "Erreur réseau",
+    "product_not_found": "Produit non trouvé",
+    "out_of_stock": "Produit plus disponible",
+    "invalid_postal_code": "Code postal invalide",
+    "required_field": "Ce champ est requis"
+  }
+}
